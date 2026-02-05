@@ -1,0 +1,425 @@
+:root {
+    --atm-body: #1e293b;
+    --atm-metal: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+    --atm-trim: #0f172a;
+    --screen-bg: #000;
+    --screen-glow: #38bdf8;
+    --led-green: #22c55e;
+    --led-red: #ef4444;
+}
+
+body {
+    background-color: #0f172a;
+    background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Share Tech Mono', monospace;
+    color: white;
+    overflow: hidden;
+}
+
+/* --- CASING --- */
+.atm-casing {
+    width: 900px;
+    height: 800px;
+    background: var(--atm-metal);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 
+        inset 0 0 20px rgba(0,0,0,0.5),
+        0 0 50px rgba(0,0,0,0.5);
+    border: 2px solid #475569;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 20px;
+}
+
+.atm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0f172a;
+    padding: 15px 25px;
+    border-radius: 10px;
+    border-bottom: 2px solid #334155;
+}
+
+.brand-logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #cbd5e1;
+    letter-spacing: 2px;
+}
+
+.brand-logo span {
+    color: #38bdf8;
+}
+
+/* --- SCREEN --- */
+.screen-bezel {
+    background: #0f172a;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: inset 0 0 20px black;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.screen-container {
+    width: 100%;
+    height: 350px;
+    background: black;
+    position: relative;
+    overflow: hidden;
+    border-radius: 5px;
+    border: 1px solid #333;
+}
+
+.screen {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    z-index: 2;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.screen-content {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.screen-content.active {
+    display: flex;
+    opacity: 1;
+}
+
+.logo-large {
+    font-size: 60px;
+    margin-bottom: 20px;
+}
+
+h2 {
+    color: var(--screen-glow);
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 2px;
+    margin: 0 0 10px 0;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+p {
+    font-size: 18px;
+    color: #94a3b8;
+}
+
+.blink-text {
+    margin-top: 30px;
+    color: #22c55e;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    padding: 20px;
+}
+
+.screen-btn {
+    background: transparent;
+    border: 2px solid var(--screen-glow);
+    color: var(--screen-glow);
+    padding: 15px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.screen-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+}
+
+.screen-btn.exit {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.screen-btn.exit:hover {
+    background: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+.pin-display, .amount-display {
+    font-size: 40px;
+    letter-spacing: 10px;
+    margin-top: 20px;
+    color: white;
+    text-shadow: 0 0 10px white;
+}
+
+/* CRT Effects */
+.scan-lines {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.glare {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 11;
+}
+
+/* --- SIDE KEYS --- */
+.side-keys {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.side-keys.left { left: -30px; }
+.side-keys.right { right: -30px; }
+
+.side-key {
+    width: 40px;
+    height: 30px;
+    background: #334155;
+    border: none;
+    border-radius: 4px;
+    box-shadow: -2px 2px 5px black;
+    cursor: pointer;
+}
+.side-key:active { transform: translateX(2px); }
+
+
+/* --- CONTROLS AREA --- */
+.controls-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.slots-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.slot-container {
+    background: #1e293b;
+    border-radius: 10px;
+    padding: 10px;
+    border: 1px solid #475569;
+    position: relative;
+}
+
+.slot-label {
+    text-align: center;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+}
+
+.slot-opening {
+    height: 15px;
+    background: #000;
+    border-radius: 10px;
+    position: relative;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+}
+
+/* --- CARD SLOT --- */
+.card-reader-light {
+    position: absolute;
+    top: -5px; left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: #22c55e;
+    border-radius: 2px;
+    box-shadow: 0 0 10px #22c55e;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse { 50% { opacity: 0.5; } }
+
+.credit-card {
+    width: 200px;
+    height: 120px;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    border-radius: 10px;
+    position: absolute;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    transition: top 1s ease-in-out;
+    cursor: pointer;
+    z-index: 100;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+.credit-card.inserted {
+    top: -150px; /* Moves into the slot */
+}
+
+.chip {
+    width: 30px;
+    height: 20px;
+    background: #fbbf24;
+    border-radius: 4px;
+    margin-bottom: 40px;
+}
+
+.number {
+    font-family: monospace;
+    font-size: 16px;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+}
+
+/* --- RECEIPT SLOT --- */
+.receipt-slot .slot-opening {
+    width: 200px;
+    margin: 0 auto;
+}
+
+.paper.receipt {
+    width: 180px;
+    background: white;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    transition: transform 1s ease-out;
+    padding: 10px;
+    box-sizing: border-box;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    color: black;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 5;
+    opacity: 0;
+}
+
+.paper.receipt.printed {
+    opacity: 1;
+    transform: translateX(-50%) translateY(100px);
+}
+
+.receipt-row {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dashed #ccc;
+    padding: 2px 0;
+}
+
+/* --- CASH SLOT --- */
+.cash-slot .slot-opening {
+    height: 30px;
+}
+
+.cash-stack {
+    font-size: 40px;
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 50;
+}
+
+.cash-stack.dispensed {
+    transform: translateX(-50%) scale(1) translateY(50px);
+}
+
+
+/* --- KEYPAD --- */
+.keypad-group {
+    background: #0f172a;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    box-shadow: inset 0 0 20px black;
+}
+
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.keypad button {
+    padding: 15px 0;
+    font-size: 20px;
+    font-family: 'Share Tech Mono', monospace;
+    background: #e2e8f0;
+    border: none;
+    border-radius: 4px;
+    color: #1e293b;
+    box-shadow: 
+        inset 0 2px 0 white,
+        0 4px 0 #94a3b8,
+        0 5px 5px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.keypad button:active {
+    transform: translateY(4px);
+    box-shadow: inset 0 2px 0 #cbd5e1, 0 0 0 transparent;
+}
+
+.keypad button.empty {
+    background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+}
+
+.keypad button.func-key {
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+}
+
+.keypad button.cancel {
+    background: #ef4444;
+    box-shadow: inset 0 2px 0 #fca5a5, 0 4px 0 #b91c1c, 0 5px 5px rgba(0,0,0,0.3);
+}
+
+.keypad button.clear {
+    background: #eab308;
+    box-shadow: inset 0 2px 0 #fde047, 0 4px 0 #a16207, 0 5px 5px rgba(0,0,0,0.3);
+}
+
+.keypad button.enter {
+    background: #22c55e;
+    box-shadow: inset 0 2px 0 #86efac, 0 4px 0 #15803d, 0 5px 5px rgba(0,0,0,0.3);
+}

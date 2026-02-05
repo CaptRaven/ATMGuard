@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATMGuard Secure Terminal</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="atm-casing">
+    <div class="atm-header">
+        <div class="brand-logo">ATM<span>GUARD</span></div>
+        <div class="status-light" id="statusLight"></div>
+    </div>
+
+    <div class="screen-bezel">
+        <div class="screen-container">
+            <div class="screen" id="screen">
+                <!-- Screens will be injected here via JS -->
+                <div class="screen-content active" id="screen-welcome">
+                    <div class="logo-large">🛡️</div>
+                    <h2>WELCOME</h2>
+                    <p>Please Insert Your Card</p>
+                    <div class="blink-text">INSERT CARD BELOW</div>
+                </div>
+            </div>
+            <div class="scan-lines"></div>
+            <div class="glare"></div>
+        </div>
+        
+        <!-- Side Keys (Visual only for this demo, or functional) -->
+        <div class="side-keys left">
+            <button class="side-key"></button>
+            <button class="side-key"></button>
+            <button class="side-key"></button>
+            <button class="side-key"></button>
+        </div>
+        <div class="side-keys right">
+            <button class="side-key"></button>
+            <button class="side-key"></button>
+            <button class="side-key"></button>
+            <button class="side-key"></button>
+        </div>
+    </div>
+
+    <div class="controls-area">
+        <div class="slots-group">
+            <div class="slot-container receipt-slot">
+                <div class="slot-label">RECEIPT</div>
+                <div class="slot-opening">
+                    <div class="paper receipt" id="receiptPaper">
+                        <div class="receipt-content" id="receiptContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slot-container card-slot" onclick="insertCard()">
+                <div class="slot-label">CARD</div>
+                <div class="slot-opening">
+                    <div class="card-reader-light"></div>
+                    <div class="credit-card" id="userCard">
+                        <div class="chip"></div>
+                        <div class="number">**** **** **** 1234</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slot-container cash-slot">
+                <div class="slot-label">CASH</div>
+                <div class="slot-opening">
+                    <div class="cash-stack" id="cashStack">
+                        💵 💵 💵
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="keypad-group">
+            <div class="keypad">
+                <button onclick="press('1')">1</button>
+                <button onclick="press('2')">2</button>
+                <button onclick="press('3')">3</button>
+                <button class="func-key cancel" onclick="cancel()">CANCEL</button>
+                
+                <button onclick="press('4')">4</button>
+                <button onclick="press('5')">5</button>
+                <button onclick="press('6')">6</button>
+                <button class="func-key clear" onclick="clearInput()">CLEAR</button>
+                
+                <button onclick="press('7')">7</button>
+                <button onclick="press('8')">8</button>
+                <button onclick="press('9')">9</button>
+                <button class="func-key enter" onclick="submit()">ENTER</button>
+                
+                <button class="empty"></button>
+                <button onclick="press('0')">0</button>
+                <button class="empty"></button>
+                <button class="empty"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // State Management
+    let state = "WELCOME"; // WELCOME, PIN, MENU, AMOUNT, PROCESSING, FINISHED
+    let inputBuffer = "";
+    let cardId = "CARD123"; // Simulating a specific card
+    let currentTxn = "";
+
+    const screen = document.getElementById('screen');
+    const userCard = document.getElementById('userCard');
+    const cashStack = document.getElementById('cashStack');
+    const receiptPaper = document.getElementById('receiptPaper');
+
+    // Sounds (Optional placeholders)
+    const beep = () => console.log('beep');
+
+    function updateScreen(html) {
+        screen.innerHTML = html;
+    }
+
+    function insertCard() {
+        if (state !== "WELCOME") return;
+        
+        userCard.classList.add('inserted');
+        setTimeout(() => {
+            state = "PIN";
+            renderPinScreen();
+        }, 1000);
+    }
+
+    function renderPinScreen() {
+        updateScreen(`
+            <h2>ENTER PIN</h2>
+            <p>Please enter your 4-digit PIN</p>
+            <div class="pin-display" id="pinDisplay">_ _ _ _</div>
+        `);
+    }
+
+    function renderMenuScreen() {
+        updateScreen(`
+            <h2>MAIN MENU</h2>
+            <div class="menu-grid">
+                <button class="screen-btn" onclick="selectTxn('withdraw')">WITHDRAW CASH</button>
+                <button class="screen-btn" onclick="selectTxn('balance')">CHECK BALANCE</button>
+                <button class="screen-btn" onclick="selectTxn('mini')">MINI STATEMENT</button>
+                <button class="screen-btn exit" onclick="cancel()">EJECT CARD</button>
+            </div>
+        `);
+    }
+
+    function renderAmountScreen() {
+        updateScreen(`
+            <h2>WITHDRAWAL</h2>
+            <p>Enter amount in multiples of ₦500</p>
+            <div class="amount-display">₦<span id="amountDisplay">0</span></div>
+        `);
+    }
+
+    function renderMessage(title, msg, type="info") {
+        updateScreen(`
+            <div class="message ${type}">
+                <h2>${title}</h2>
+                <p>${msg}</p>
+            </div>
+        `);
+    }
+
+    function press(key) {
+        beep();
+        if (state === "PIN") {
+            if (inputBuffer.length < 4) {
+                inputBuffer += key;
+                updatePinDisplay();
+            }
+        } else if (state === "AMOUNT") {
+            if (inputBuffer.length < 6) {
+                inputBuffer += key;
+                updateAmountDisplay();
+            }
+        }
+    }
+
+    function clearInput() {
+        inputBuffer = "";
+        if (state === "PIN") updatePinDisplay();
+        if (state === "AMOUNT") updateAmountDisplay();
+    }
+
+    function cancel() {
+        state = "WELCOME";
+        inputBuffer = "";
+        userCard.classList.remove('inserted');
+        receiptPaper.classList.remove('printed');
+        cashStack.classList.remove('dispensed');
+        
+        updateScreen(`
+            <div class="screen-content active">
+                <div class="logo-large">🛡️</div>
+                <h2>WELCOME</h2>
+                <p>Please Insert Your Card</p>
+                <div class="blink-text">INSERT CARD BELOW</div>
+            </div>
+        `);
+    }
+
+    function updatePinDisplay() {
+        const display = document.getElementById('pinDisplay');
+        if(display) display.innerText = "* ".repeat(inputBuffer.length) + "_ ".repeat(4 - inputBuffer.length);
+    }
+
+    function updateAmountDisplay() {
+        const display = document.getElementById('amountDisplay');
+        if(display) display.innerText = inputBuffer || "0";
+    }
+
+    function selectTxn(type) {
+        currentTxn = type;
+        if (type === 'withdraw') {
+            state = "AMOUNT";
+            inputBuffer = "";
+            renderAmountScreen();
+        } else {
+            processTransaction();
+        }
+    }
+
+    async function submit() {
+        if (state === "PIN") {
+            if (inputBuffer.length === 4) {
+                await verifyPin();
+            }
+        } else if (state === "AMOUNT") {
+            if (inputBuffer.length > 0) {
+                processTransaction(parseInt(inputBuffer));
+            }
+        }
+    }
+
+    async function verifyPin() {
+        renderMessage("PLEASE WAIT", "Verifying PIN...", "info");
+        
+        try {
+            const res = await fetch("/atm", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ card_id: cardId, pin: inputBuffer })
+            });
+            const data = await res.json();
+            
+            if (data.status === "success") {
+                state = "MENU";
+                inputBuffer = "";
+                renderMenuScreen();
+            } else {
+                renderMessage("ERROR", data.message, "error");
+                setTimeout(() => {
+                    state = "PIN";
+                    inputBuffer = "";
+                    renderPinScreen();
+                }, 2000);
+            }
+        } catch (e) {
+            renderMessage("SYSTEM ERROR", "Connection Failed", "error");
+            setTimeout(cancel, 3000);
+        }
+    }
+
+    async function processTransaction(amount = 0) {
+        renderMessage("PROCESSING", "Please wait...", "info");
+
+        try {
+            const payload = {
+                card_id: cardId,
+                transaction_type: currentTxn,
+                amount: amount
+            };
+            
+            // We need to send PIN again if session logic requires it, 
+            // but our session backend handles state.
+            // Just in case, let's keep it simple.
+            
+            const res = await fetch("/atm", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (data.status === "success") {
+                if (currentTxn === "withdraw") {
+                    dispenseCash();
+                    renderMessage("SUCCESS", "Please take your cash.", "success");
+                } else if (currentTxn === "balance") {
+                    renderMessage("BALANCE", data.message, "success");
+                } else if (currentTxn === "mini") {
+                    printReceipt(data.statement);
+                    renderMessage("PRINTING", "Please take your receipt.", "success");
+                }
+                
+                setTimeout(() => {
+                    state = "MENU";
+                    renderMenuScreen();
+                }, 4000);
+
+            } else {
+                renderMessage("TRANSACTION FAILED", data.message, "error");
+                setTimeout(() => {
+                    state = "MENU";
+                    renderMenuScreen();
+                }, 3000);
+            }
+
+        } catch (e) {
+            renderMessage("ERROR", "Network Error", "error");
+        }
+    }
+
+    function dispenseCash() {
+        cashStack.classList.add('dispensed');
+        setTimeout(() => {
+            cashStack.classList.remove('dispensed');
+        }, 3000);
+    }
+
+    function printReceipt(statement) {
+        let html = `<h3>MINI STATEMENT</h3><hr>`;
+        if(statement) {
+            statement.forEach(txn => {
+                html += `<div class="receipt-row"><span>${txn.timestamp.split(' ')[0]}</span><span>₦${txn.amount}</span></div>`;
+            });
+        }
+        document.getElementById('receiptContent').innerHTML = html;
+        receiptPaper.classList.add('printed');
+        
+        setTimeout(() => {
+            receiptPaper.classList.remove('printed');
+        }, 5000);
+    }
+
+</script>
+
+</body>
+</html>

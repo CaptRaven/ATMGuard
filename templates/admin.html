@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ATMGuard Admin Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial; background:#0f172a; color:white; padding:20px; }
+    h1 { color:#38bdf8; }
+    .card { background:#1e293b; padding:15px; margin-bottom:20px; border-radius:10px; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { padding:8px; border-bottom:1px solid #334155; text-align:center; }
+    button { padding:6px 10px; border:none; border-radius:6px; cursor:pointer; }
+    .unblock { background:#16a34a; color:white; }
+  </style>
+</head>
+<body>
+
+<h1>🚨 ATMGuard Fraud Monitoring Dashboard</h1>
+
+<div class="card">
+  <h2>Total Fraud Cases Detected</h2>
+  <h1 id="fraudCount">{{ fraud_count }}</h1>
+</div>
+
+<div class="card">
+  <h2>Fraud Type Chart</h2>
+  <canvas id="fraudChart"></canvas>
+</div>
+
+<div class="card">
+  <h2>Blocked / Active Cards</h2>
+  <table>
+    <tr>
+      <th>Card ID</th>
+      <th>Status</th>
+      <th>PIN Attempts</th>
+      <th>Balance</th>
+      <th>Action</th>
+    </tr>
+    {% for card in cards %}
+    <tr>
+      <td>{{ card.card_id }}</td>
+      <td>{{ card.status }}</td>
+      <td>{{ card.pin_attempts }}</td>
+      <td>₦{{ card.balance }}</td>
+      <td>
+        {% if card.status == "blocked" %}
+        <button class="unblock" onclick="unblockCard('{{ card.card_id }}')">Unblock</button>
+        {% else %}
+        —
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Fraud Logs</h2>
+  <table>
+    <tr>
+      <th>Card ID</th>
+      <th>Fraud Type</th>
+      <th>Action Taken</th>
+      <th>Timestamp</th>
+    </tr>
+    {% for log in fraud_logs %}
+    <tr>
+      <td>{{ log.card_id }}</td>
+      <td>{{ log.fraud_type }}</td>
+      <td>{{ log.action_taken }}</td>
+      <td>{{ log.timestamp }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<script>
+async function loadFraudChart() {
+  const labels = {{ chart_labels | tojson }};
+  const values = {{ chart_values | tojson }};
+
+  new Chart(document.getElementById("fraudChart"), {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Fraud Cases",
+        data: values,
+        backgroundColor: '#38bdf8'
+      }]
+    }
+  });
+}
+
+async function unblockCard(cardId) {
+  await fetch(`/admin/unblock/${cardId}`, { method: "POST" });
+  alert("Card Unblocked!");
+  location.reload();
+}
+
+loadFraudChart();
+</script>
+
+</body>
+</html>
