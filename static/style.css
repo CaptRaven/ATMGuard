@@ -14,27 +14,31 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
     font-family: 'Share Tech Mono', monospace;
     color: white;
-    overflow: hidden;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 /* --- CASING --- */
 .atm-casing {
-    width: 900px;
-    height: 800px;
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    max-height: 95vh;
     background: var(--atm-metal);
     border-radius: 20px;
-    padding: 30px;
+    padding: 20px;
     box-shadow: 
         inset 0 0 20px rgba(0,0,0,0.5),
         0 0 50px rgba(0,0,0,0.5);
     border: 2px solid #475569;
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
 }
 
 .atm-header {
@@ -73,7 +77,7 @@ body {
 
 .screen-container {
     width: 100%;
-    height: 350px;
+    height: 300px;
     background: black;
     position: relative;
     overflow: hidden;
@@ -199,7 +203,7 @@ p {
     position: absolute;
     display: flex;
     flex-direction: column;
-    gap: 40px;
+    gap: 30px;
 }
 
 .side-keys.left { left: -30px; }
@@ -422,4 +426,31 @@ p {
 .keypad button.enter {
     background: #22c55e;
     box-shadow: inset 0 2px 0 #86efac, 0 4px 0 #15803d, 0 5px 5px rgba(0,0,0,0.3);
+}
+
+@media (max-height: 750px) {
+    .atm-casing {
+        padding: 10px;
+        gap: 10px;
+    }
+    .screen-container {
+        height: 250px;
+    }
+    .keypad button {
+        padding: 10px 0;
+        font-size: 16px;
+    }
+    .credit-card {
+        width: 150px;
+        height: 90px;
+    }
+}
+
+@media (max-width: 600px) {
+    .controls-area {
+        grid-template-columns: 1fr;
+    }
+    .side-keys {
+        display: none;
+    }
 }
