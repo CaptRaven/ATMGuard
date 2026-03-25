@@ -18,8 +18,8 @@ def start_session(card_id: str):
     # Return in-memory session
     session = get_session(card_id)
 
-    # If the previous session expired or completed, start fresh from card insertion.
-    if session.state in (ATMState.EXPIRED, ATMState.COMPLETED):
+    # If the previous session expired, completed, or stuck in amount entered, start fresh from card insertion.
+    if session.state in (ATMState.EXPIRED, ATMState.COMPLETED, ATMState.AMOUNT_ENTERED):
         session.reset()
 
     return session
