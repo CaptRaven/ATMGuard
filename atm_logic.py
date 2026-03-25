@@ -16,7 +16,13 @@ def start_session(card_id: str):
     conn.close()
     
     # Return in-memory session
-    return get_session(card_id)
+    session = get_session(card_id)
+
+    # If the previous session expired or completed, start fresh from card insertion.
+    if session.state in (ATMState.EXPIRED, ATMState.COMPLETED):
+        session.reset()
+
+    return session
 
 def get_balance(session: ATMSession):
     conn = session.get_db()

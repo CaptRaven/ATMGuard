@@ -18,6 +18,13 @@ class ATMSession:
     def touch(self):
         self.last_activity = time.time()
 
+    def reset(self):
+        self.state = ATMState.CARD_INSERTED
+        self.pin_attempts = 0
+        self.selected_transaction = None
+        self.amount = None
+        self.touch()
+
     def check_timeout(self):
         # Extend timeout logic to handle rapid wrong PINs appropriately
         if time.time() - self.last_activity > SESSION_TIMEOUT:
@@ -28,7 +35,10 @@ class ATMSession:
         # Do not check timeout if we are just starting or handling exceptions
         if required_state != ATMState.CARD_INSERTED:
             self.check_timeout()
-            
+
+        if self.state == ATMState.EXPIRED:
+            raise Exception("Session expired. Please reinsert card")
+
         if self.state != required_state:
             raise Exception(f"Action not allowed. Required: {required_state.name}, Current: {self.state.name}")
 
