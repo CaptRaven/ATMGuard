@@ -18,8 +18,15 @@ def start_session(card_id: str):
     # Return in-memory session
     session = get_session(card_id)
 
-    # Always reset session on new card insertion for reliability
-    session.reset()
+    # Reset only if session is in a terminal or stuck state, not on every call!
+    stuck_states = (
+        ATMState.EXPIRED, 
+        ATMState.COMPLETED, 
+        ATMState.AMOUNT_ENTERED,
+        ATMState.BLOCKED
+    )
+    if session.state in stuck_states:
+        session.reset()
 
     return session
 
