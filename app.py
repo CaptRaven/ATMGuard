@@ -63,6 +63,7 @@ def atm_api():
     transaction_type = data.get("transaction_type")
     amount = int(data.get("amount", 0))
     location = data.get("location", "UNKNOWN_ATM")
+    reset_session = data.get("reset", False)
 
     if not card_id:
         return jsonify({"status": "error", "message": "Card ID required"}), 400

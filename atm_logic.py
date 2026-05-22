@@ -18,9 +18,8 @@ def start_session(card_id: str):
     # Return in-memory session
     session = get_session(card_id)
 
-    # If the previous session expired, completed, or stuck in amount entered, start fresh from card insertion.
-    if session.state in (ATMState.EXPIRED, ATMState.COMPLETED, ATMState.AMOUNT_ENTERED):
-        session.reset()
+    # Always reset session on new card insertion for reliability
+    session.reset()
 
     return session
 
@@ -129,38 +128,43 @@ def complete_transaction(session: ATMSession):
         location=session.current_location
     )
 
-    if fraud.action == "BLOCK":
-        block_card(session.card_id, ", ".join(fraud.reasons))
-        raise Exception("Transaction blocked due to suspected fraud")
+    try:
+        if fraud.action == "BLOCK":
+            block_card(session.card_id, ", ".join(fraud.reasons))
+            raise Exception("Transaction blocked due to suspected fraud")
 
-    if session.selected_transaction == "withdraw" and session.amount:
-        balance = get_balance(session)
-        update_balance(session, balance - session.amount)
+        if session.selected_transaction == "withdraw" and session.amount:
+            balance = get_balance(session)
+            update_balance(session, balance - session.amount)
 
-    # Log transaction
-    conn = session.get_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO transactions (card_id, type, amount, status, timestamp, location)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (
-        session.card_id,
-        session.selected_transaction,
-        session.amount or 0,
-        "FLAGGED" if fraud.reasons else "COMPLETED",
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        session.current_location
-    ))
-    for reason in fraud.reasons:
+        # Log transaction
+        conn = session.get_db()
+        cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO fraud_log (card_id, fraud_type, action_taken, timestamp)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO transactions (card_id, type, amount, status, timestamp, location)
+            VALUES (?, ?, ?, ?, ?, ?)
         """, (
             session.card_id,
-            reason,
-            "Transaction flagged",
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            session.selected_transaction,
+            session.amount or 0,
+            "FLAGGED" if fraud.reasons else "COMPLETED",
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            session.current_location
         ))
-    conn.commit()
-    conn.close()
-    session.state = ATMState.COMPLETED
+        for reason in fraud.reasons:
+            cursor.execute("""
+                INSERT INTO fraud_log (card_id, fraud_type, action_taken, timestamp)
+                VALUES (?, ?, ?, ?)
+            """, (
+                session.card_id,
+                reason,
+                "Transaction flagged",
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            ))
+        conn.commit()
+        conn.close()
+        session.state = ATMState.COMPLETED
+    except Exception as e:
+        # Reset session state to allow recovery even on errors
+        session.reset_for_next_transaction()
+        raise e
